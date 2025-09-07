@@ -1,0 +1,28 @@
+@startuml context_diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+Person(new_client, "Новый клиент", "Потенциальный клиент банка, желающий открыть депозит")
+Person(registered_client, "Зарегистрированный клиент", "Клиент банка с доступом к интернет-банку")
+Person(manager, "Менеджер кол-центра", "Сотрудник кол-центра, обрабатывающий заявки")
+Person(back_office, "Сотрудник бэк-офиса", "Сотрудник бэк-офиса, согласовывающий ставки")
+
+System(site, "Сайт банка", "Веб-сайт для просмотра депозитов и подачи заявок")
+System(internet_bank, "Интернет-банк", "Система онлайн-банкинга для зарегистрированных клиентов")
+System(microservices, "Промежуточный слой", "Микросервисы для изоляции АБС")
+System(call_center, "Система кол-центра", "CRM система для обработки заявок")
+System(abs, "АБС", "Автоматизированная банковская система")
+System(sms_gateway, "СМС-шлюз", "Система отправки SMS уведомлений")
+System_Ext(telecom_operator, "Телеком-оператор", "Внешний оператор по отправке SMS")
+
+Rel(new_client, site, "Просматривает депозиты, подает заявку", "HTTPS")
+Rel(registered_client, internet_bank, "Просматривает депозиты, создает заявку", "HTTPS")
+Rel(site, call_center, "Передает заявку", "API")
+Rel(internet_bank, microservices, "Запрашивает ставки, создает заявки", "REST API")
+Rel(microservices, abs, "Сохраняет заявки, получает ставки", "API")
+Rel(call_center, microservices, "Обновляет статус заявки", "REST API")
+Rel(manager, call_center, "Обрабатывает заявки", "Web UI")
+Rel(back_office, abs, "Согласовывает ставки", "Desktop Client")
+Rel(microservices, sms_gateway, "Отправляет уведомления", "API")
+Rel(sms_gateway, telecom_operator, "Передает SMS", "API")
+
+@enduml
