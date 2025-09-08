@@ -1,0 +1,26 @@
+@startuml context_diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+Person(cc_operator, "Сотрудник кол-центра", "Оператор кол-центра банка, консультирующий клиентов по ставкам")
+Person(partner_cc_operator, "Сотрудник партнёрского кол-центра", "Оператор партнёрского кол-центра, консультирующий клиентов по ставкам")
+Person(back_office, "Сотрудник бэк-офиса", "Сотрудник бэк-офиса, управляющий ставками по депозитам")
+Person(client, "Клиент банка", "Клиент, обращающийся в кол-центр за консультацией по ставкам")
+
+System(cc_system, "Система кол-центра", "CRM система кол-центра банка для консультирования клиентов")
+System_Ext(partner_cc_system, "Партнёрский кол-центр", "Внешняя система партнёрского кол-центра")
+System(rates_service, "Сервис ставок", "Микросервис для управления ставками, кэширования и выгрузки файлов")
+System(abs, "АБС", "Автоматизированная банковская система - источник ставок")
+System_Ext(sftp_server, "SFTP-сервер", "Сервер для хранения файлов со ставками")
+
+Rel(cc_operator, cc_system, "Просматривает ставки для консультирования", "Web UI")
+Rel(partner_cc_operator, partner_cc_system, "Просматривает ставки из файла", "Desktop")
+Rel(back_office, abs, "Обновляет ставки по депозитам", "Desktop Client")
+Rel(client, cc_operator, "Обращается за консультацией", "Phone")
+Rel(client, partner_cc_operator, "Обращается за консультацией", "Phone")
+
+Rel(cc_system, rates_service, "Запрашивает актуальные ставки", "REST API")
+Rel(rates_service, abs, "Получает ставки", "JDBC")
+Rel(rates_service, sftp_server, "Выгружает файл со ставками", "SFTP")
+Rel(partner_cc_system, sftp_server, "Читает файл со ставками", "SFTP")
+
+@enduml
