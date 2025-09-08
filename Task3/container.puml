@@ -1,0 +1,60 @@
+@startuml container_diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(new_client, "Новый клиент", "Потенциальный клиент банка")
+Person(registered_client, "Зарегистрированный клиент", "Клиент с доступом к интернет-банку")
+Person(manager, "Менеджер кол-центра", "Сотрудник кол-центра")
+Person(back_office, "Сотрудник бэк-офиса", "Сотрудник бэк-офиса")
+
+System_Boundary(site_boundary, "Сайт банка") {
+    Container(web_app, "Веб-приложение", "React.js, PHP", "Отображение депозитов и подача заявок")
+}
+
+System_Boundary(ib_boundary, "Интернет-банк") {
+    Container(ib_web, "Веб-интерфейс", "ASP.NET MVC 4.5", "Пользовательский интерфейс")
+    Container(ib_db, "База данных", "MS SQL Server", "Хранение данных интернет-банка")
+}
+
+System_Boundary(services_boundary, "Микросервисы") {
+    Container(rates_service, "Сервис ставок", "Java Spring Boot", "Управление ставками по депозитам")
+    Container(applications_service, "Сервис заявок", "Java Spring Boot", "Обработка заявок на депозиты")
+    Container(notifications_service, "Сервис уведомлений", "Java Spring Boot", "Отправка SMS уведомлений")
+    Container(redis, "Redis", "Redis", "Кэширование данных")
+}
+
+System_Boundary(cc_boundary, "Кол-центр") {
+    Container(cc_system, "CRM система", "React.js, Java Spring Boot", "Обработка заявок")
+    Container(cc_db, "База данных", "PostgreSQL", "Хранение данных кол-центра")
+}
+
+System_Boundary(abs_boundary, "АБС") {
+    Container(abs_client, "Клиент АБС", "Delphi", "Рабочее место сотрудника")
+    Container(abs_db, "База данных", "Oracle", "Основная банковская база данных")
+}
+
+System_Boundary(sms_boundary, "СМС-шлюз") {
+    Container(sms_system, "СМС-система", "Внешняя система", "Отправка SMS сообщений")
+}
+
+System_Boundary(telecom_boundary, "Телеком-оператор") {
+    Container_Ext(telecom_system, "Телеком-система", "Внешняя система", "Доставка SMS сообщений")
+}
+
+Rel(new_client, web_app, "Просматривает депозиты, подает заявку", "HTTPS")
+Rel(registered_client, ib_web, "Просматривает депозиты, создает заявку", "HTTPS")
+Rel(web_app, cc_system, "Передает заявку", "REST API")
+Rel(ib_web, rates_service, "Запрашивает ставки", "REST API")
+Rel(ib_web, applications_service, "Создает заявку", "REST API")
+Rel(applications_service, abs_db, "Сохраняет заявку", "JDBC")
+Rel(cc_system, applications_service, "Обновляет статус заявки", "REST API")
+Rel(manager, cc_system, "Обрабатывает заявки", "Web UI")
+Rel(back_office, abs_client, "Согласовывает ставки", "Desktop")
+Rel(abs_client, abs_db, "Работает с данными", "ODBC")
+Rel(applications_service, notifications_service, "Запрашивает отправку SMS", "REST API")
+Rel(notifications_service, sms_system, "Отправляет SMS", "API")
+Rel(sms_system, telecom_system, "Передает SMS", "API")
+Rel(rates_service, redis, "Кэширует ставки", "Redis Protocol")
+Rel(ib_web, ib_db, "Сохраняет данные", "ADO.NET")
+Rel(cc_system, cc_db, "Сохраняет данные", "JDBC")
+
+@enduml

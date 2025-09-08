@@ -1,0 +1,48 @@
+@startuml container_diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(cc_operator, "Сотрудник кол-центра", "Оператор кол-центра банка")
+Person(partner_cc_operator, "Сотрудник партнёрского кол-центра", "Оператор партнёрского кол-центра")
+Person(back_office, "Сотрудник бэк-офиса", "Сотрудник бэк-офиса")
+Person(client, "Клиент банка", "Клиент банка")
+
+System_Boundary(cc_boundary, "Система кол-центра") {
+    Container(cc_web, "Веб-интерфейс", "React.js", "Интерфейс для просмотра ставок")
+    Container(cc_backend, "Бэкенд", "Java Spring Boot", "API для работы со ставками")
+    Container(cc_db, "База данных", "PostgreSQL", "Хранение данных кол-центра")
+}
+
+System_Boundary(services_boundary, "Микросервисы") {
+    Container(rates_service, "Сервис ставок", "Java Spring Boot", "Управление ставками, кэширование и выгрузка файлов")
+    Container(redis, "Redis", "Redis", "Кэширование ставок")
+}
+
+System_Boundary(abs_boundary, "АБС") {
+    Container(abs_client, "Клиент АБС", "Delphi", "Рабочее место сотрудника")
+    Container(abs_db, "База данных", "Oracle", "Основная банковская база данных")
+}
+
+System_Boundary(sftp_boundary, "SFTP-сервер") {
+    Container(sftp_system, "SFTP-система", "Linux, OpenSSH", "Хранение файлов со ставками")
+}
+
+System_Boundary(partner_boundary, "Партнёрский кол-центр") {
+    Container_Ext(partner_system, "Система партнёра", "Внешняя система", "Обработка файлов со ставками")
+}
+
+Rel(cc_operator, cc_web, "Просматривает ставки", "HTTPS")
+Rel(partner_cc_operator, partner_system, "Просматривает ставки из файла", "Desktop")
+Rel(back_office, abs_client, "Обновляет ставки", "Desktop")
+Rel(client, cc_operator, "Обращается за консультацией", "Phone")
+Rel(client, partner_cc_operator, "Обращается за консультацией", "Phone")
+
+Rel(cc_web, cc_backend, "Запрашивает ставки", "REST API")
+Rel(cc_backend, rates_service, "Получает актуальные ставки", "REST API")
+Rel(rates_service, redis, "Кэширует ставки", "Redis Protocol")
+Rel(rates_service, abs_db, "Получает ставки", "JDBC")
+Rel(rates_service, sftp_system, "Выгружает файл со ставками", "SFTP")
+Rel(partner_system, sftp_system, "Читает файл со ставками", "SFTP")
+Rel(abs_client, abs_db, "Обновляет ставки", "ODBC")
+Rel(cc_backend, cc_db, "Сохраняет данные", "JDBC")
+
+@enduml
